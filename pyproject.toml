@@ -1,13 +1,15 @@
-name = "emp"
+[project]
+name = "EMP"
 version = "0.1.0"
 description = ""
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "Flet developer", email = "you@example.com" }
+    { name = "Dimekadze", email = "dimab8371@gmail.com" }
 ]
 dependencies = [
-    "flet>=0.85.1"
+    "flet>=0.85.1",
+    "flet_audio>=0.85.1"
 ]
 
 [dependency-groups]
