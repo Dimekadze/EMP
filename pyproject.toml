@@ -1,4 +1,3 @@
-[project]
 name = "emp"
 version = "0.1.0"
 description = ""
@@ -8,8 +7,7 @@ authors = [
     { name = "Flet developer", email = "you@example.com" }
 ]
 dependencies = [
-    "flet>=0.85.1",
-    "flet-audio>=0.85.1"
+    "flet>=0.85.1"
 ]
 
 [dependency-groups]
@@ -22,9 +20,9 @@ dev = [
 [tool.flet]
 desktop_flavor = "full"
 org = "com.mycompany"
-product = "emp"
-company = "Flet"
-copyright = "Copyright (C) 2023-2026 by Flet"
+product = "EMP"
+company = "Dimekadze"
+copyright = "com.dimekadze"
 
 [tool.flet.app]
 path = "src"
