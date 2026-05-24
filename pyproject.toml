@@ -8,8 +8,7 @@ authors = [
     { name = "Dimekadze", email = "dimab8371@gmail.com" }
 ]
 dependencies = [
-    "flet>=0.85.1",
-    "flet_audio>=0.85.1"
+    "flet>=0.85.1"
 ]
 
 [dependency-groups]
