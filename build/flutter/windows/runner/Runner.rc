@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "EMP" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "EMP" "\0"
-            VALUE "LegalCopyright", "com.dimekadze" "\0"
+            VALUE "LegalCopyright", "com.emp" "\0"
             VALUE "OriginalFilename", "EMP.exe" "\0"
             VALUE "ProductName", "EMP" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

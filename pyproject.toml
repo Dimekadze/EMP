@@ -8,7 +8,9 @@ authors = [
     { name = "Dimekadze", email = "dimab8371@gmail.com" }
 ]
 dependencies = [
-    "flet>=0.85.1"
+    "flet>=0.85.1",
+    "flet_audio>=0.85.1",
+    "certifi"
 ]
 
 [dependency-groups]
@@ -20,10 +22,10 @@ dev = [
 
 [tool.flet]
 desktop_flavor = "full"
-org = "com.mycompany"
+org = "com.emp"
 product = "EMP"
 company = "Dimekadze"
-copyright = "com.dimekadze"
+copyright = "com.emp"
 
 [tool.flet.app]
 path = "src"

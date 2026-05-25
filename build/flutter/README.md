@@ -8,9 +8,9 @@
 * `` - project description.
 * `EMP` - executable or bundle name on disk.
 * `EMP` - display name shown in window titles and about app dialogs.
-* `com.mycompany` - org name in reverse domain name notation, e.g. `com.mycompany.myproject`.
+* `com.emp` - org name in reverse domain name notation, e.g. `com.mycompany.myproject`.
 * `Dimekadze` - the name of the company.
-* `com.dimekadze` - the copyright notice.
+* `com.emp` - the copyright notice.
 
 ## Icons
 
