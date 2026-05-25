@@ -12,16 +12,14 @@ def main(page: ft.Page):
     page.window.height = 600
     page.window.width = 700
 
-    page.window.min_width = 500
-    page.window.min_height = 600
+    page.window.min_width = 600
+    page.window.min_height = 700
     
-    page.window.max_width = 800
-    page.window.max_height = 900
+    page.window.max_width = 600
+    page.window.max_height = 700
     
     page.window.resizable = True
-    page.window.always_on_top = True
-    
-    page.window.center()
+    # page.window.always_on_top = True
 
     # getting username
     username = getpass.getuser()
@@ -34,12 +32,14 @@ def main(page: ft.Page):
     is_playing = False
     total_duration = 0
     is_loading = False
+    track_loaded = False
 
     track_music_title = ft.Text(
         "Choose Track",
         color="#ffffff",
         size=30,
-        text_align=ft.TextAlign.CENTER
+        text_align=ft.TextAlign.CENTER,
+        margin=ft.Margin.only(top=30)
     )
 
     time_music_slider = ft.Slider(
@@ -50,8 +50,16 @@ def main(page: ft.Page):
         inactive_color="#696969",
     )
 
-    current_time_label = ft.Text("0:00", color="#FFFFFF", size=12)
-    total_time_label = ft.Text("0:00", color="#FFFFFF", size=12)
+    current_time_label = ft.Text(
+        "0:00", 
+        color="#FFFFFF", 
+        size=16
+    )
+    total_time_label = ft.Text(
+        "0:00", 
+        color="#FFFFFF", 
+        size=16
+    )
 
     def on_duration_change(e):
         nonlocal total_duration
@@ -67,7 +75,6 @@ def main(page: ft.Page):
 
     def on_position_change(e):
         if total_duration > 0:
-
             position = e.position
             progress = (position / total_duration) * 100
             time_music_slider.value = progress
@@ -83,6 +90,11 @@ def main(page: ft.Page):
     def on_state_change(e):
         nonlocal is_playing
         is_playing = (e.state == fta.AudioState.PLAYING)
+
+    def on_loaded(e):
+        nonlocal track_loaded
+        track_loaded = True
+        print("Loaded")
 
     audio = None
 
@@ -105,7 +117,7 @@ def main(page: ft.Page):
                 volume=1,
                 balance=0,
                 release_mode=fta.ReleaseMode.STOP,
-                on_loaded=lambda _: print("Loaded"),
+                on_loaded=on_loaded,
                 on_duration_change=on_duration_change,
                 on_position_change=on_position_change,
                 on_state_change=on_state_change,
@@ -114,6 +126,7 @@ def main(page: ft.Page):
 
             page.services.clear()
             page.services.append(audio)
+            
             track_music_title.value = track_path.stem
 
             page.update()
@@ -122,8 +135,11 @@ def main(page: ft.Page):
             print("LOAD ERROR:", e)
 
     async def play_track():
-        if audio: 
-            await audio.play()
+        if audio:
+            try:
+                await audio.resume()
+            except:
+                await audio.play()
 
     async def pause_track():
         if audio: 
@@ -201,26 +217,8 @@ def main(page: ft.Page):
             alignment=ft.Alignment.CENTER,
             content=ft.Column(
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=30,
+                spacing=25,
                 controls=[
-                    ft.Container(
-                        margin=ft.Margin.symmetric(vertical=10, horizontal=10),
-                        padding=ft.Padding.symmetric(vertical=10, horizontal=10),
-                        # border_radius=40,
-                        # width=240,
-                        alignment=ft.Alignment.CENTER,
-                        # bgcolor="#696969",
-                        content=ft.IconButton(
-                            bgcolor="#FFFFFF",
-                            icon=ft.Icons.ARROW_DROP_DOWN_CIRCLE,
-                            icon_color="#000000",
-                            icon_size=40,
-                            on_click=TopArrowButton,
-                            disabled=False,
-                        )
-                    ),
-
                     track_music_title,
 
                     ft.Container(
@@ -228,8 +226,8 @@ def main(page: ft.Page):
                         border_radius=15,
                         padding=ft.Padding.symmetric(vertical=20, horizontal=20),
                         content=ft.Image(
-                            src="images/neighborhood.jpg",
-                            height=350
+                            src="images/logo_by_default.png",
+                            height=250
                         )
                     ),
 
