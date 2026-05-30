@@ -25,7 +25,6 @@ class PlayerScreen:
             current_time_label=self.current_time,
             total_time_label=self.total_time,
             play_pause_button=self.play_pause_button,
-            album_image=self.album_image
         )
 
         self.time_slider.on_change = self.audio_control.on_slider_change
@@ -146,7 +145,6 @@ class PlayerScreen:
                 ft.Column(
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     margin=ft.Margin.only(top=10),
-                    # spacing=10,
                     controls=[
                         self.track_title,
                         self.track_artist,
