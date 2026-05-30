@@ -1,6 +1,4 @@
 import flet as ft
-import getpass
-from pathlib import Path
 
 class Config:
     def __init__(self, page: ft.Page):
