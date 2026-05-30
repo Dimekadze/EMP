@@ -1,7 +1,16 @@
+import hashlib
+import tempfile
+
 import flet as ft
 import flet_audio as fta
 import getpass
 from pathlib import Path
+from mutagen import File
+from mutagen.mp3 import MP3
+from mutagen.id3 import ID3, APIC
+from mutagen.flac import FLAC
+from mutagen.oggvorbis import OggVorbis
+from mutagen.mp4 import MP4
 
 class AudioControl:
     def __init__(self, page: ft.Page):
@@ -15,28 +24,37 @@ class AudioControl:
         self.track_loaded = False
 
         self.track_title = None
+        self.track_album = None
+        self.track_artist = None
         self.time_slider = None
         self.current_time_label = None
         self.total_time_label = None
         self.play_pause_button = None
+        self.album_image = None
 
+        self._extensions = ["mp3", "flac", "ogg", "m4a", "wav"]
         self.username = getpass.getuser()
         self.music_folder = Path(f"/home/{self.username}/Music")
-        self.music_list = list(self.music_folder.glob("*.mp3"))
+        self.music_list = [
+            path for ext in self._extensions 
+            for path in self.music_folder.rglob(f"*.{ext}")
+        ]
 
-    def set_ui_elements(self, track_title, time_slider, current_time_label, total_time_label, play_pause_button):
+        self._cover_cache = {}
+        
+    def set_ui_elements(self, track_title, time_slider, current_time_label, total_time_label, 
+                    play_pause_button, track_artist=None, track_album=None, album_image=None):
         self.track_title = track_title
+        self.track_artist = track_artist
+        self.track_album = track_album
         self.time_slider = time_slider
         self.current_time_label = current_time_label
         self.total_time_label = total_time_label
         self.play_pause_button = play_pause_button
+        self.album_image = album_image
         
         if self.time_slider:
             self.time_slider.on_change = self.on_slider_change
-
-    @property
-    def page(self):
-        return self._page
 
     def update_play_pause_button(self):
         if self.play_pause_button:
@@ -44,7 +62,129 @@ class AudioControl:
                 self.play_pause_button.icon = ft.Icons.PAUSE
             else:
                 self.play_pause_button.icon = ft.Icons.PLAY_ARROW
-            self.page.update()
+            self._page.update()
+
+    def _save_temp_cover(self, image_data):
+        """Сохраняет обложку во временный файл и возвращает путь"""
+        try:
+            # Генерируем уникальное имя на основе содержимого
+            cover_hash = hashlib.md5(image_data).hexdigest()
+            
+            # Проверяем кэш
+            if cover_hash in self._cover_cache:
+                return self._cover_cache[cover_hash]
+            
+            # Сохраняем во временную папку
+            temp_dir = Path(tempfile.gettempdir()) / "emp_covers"
+            temp_dir.mkdir(exist_ok=True)
+            
+            temp_path = temp_dir / f"{cover_hash}.jpg"
+            
+            if not temp_path.exists():
+                with open(temp_path, "wb") as f:
+                    f.write(image_data)
+            
+            self._cover_cache[cover_hash] = str(temp_path)
+            return str(temp_path)
+            
+        except Exception as e:
+            print(f"Error saving cover: {e}")
+            return None
+
+    def extract_metadata(self, file_path):
+        metadata = {
+            "title": file_path.stem,
+            "artist": "Unknown Artist",
+            "album": "Unknown Album",
+            "duration": 0,
+            "cover_path": None
+        }
+        
+        try:
+            audio = File(file_path)
+            
+            if audio is None:
+                return metadata
+            
+            # MP3
+            if isinstance(audio, MP3):
+                try:
+                    tags = ID3(file_path)
+                    
+                    if tags.get('TIT2'):
+                        metadata["title"] = str(tags.get('TIT2'))
+                    
+                    if tags.get('TPE1'):
+                        metadata["artist"] = str(tags.get('TPE1'))
+                    
+                    if tags.get('TALB'):
+                        metadata["album"] = str(tags.get('TALB'))
+                    
+                    for tag in tags.values():
+                        if isinstance(tag, APIC):
+                            metadata["album_art"] = tag.data
+                            break
+                            
+                except Exception as e:
+                    print(f"Error reading MP3 tags: {e}")
+            
+            # FLAC
+            elif isinstance(audio, FLAC):
+                metadata["title"] = audio.get("title", [metadata["title"]])[0]
+                metadata["artist"] = audio.get("artist", [metadata["artist"]])[0]
+                metadata["album"] = audio.get("album", [metadata["album"]])[0]
+                
+                if audio.pictures:
+                    metadata["album_art"] = audio.pictures[0].data
+            
+            # OGG Vorbis
+            elif isinstance(audio, OggVorbis):
+                metadata["title"] = audio.get("title", [metadata["title"]])[0]
+                metadata["artist"] = audio.get("artist", [metadata["artist"]])[0]
+                metadata["album"] = audio.get("album", [metadata["album"]])[0]
+            
+            # M4A/MP4
+            elif isinstance(audio, MP4):
+                metadata["title"] = audio.get("\xa9nam", [metadata["title"]])[0]
+                metadata["artist"] = audio.get("\xa9ART", [metadata["artist"]])[0]
+                metadata["album"] = audio.get("\xa9alb", [metadata["album"]])[0]
+                
+                if "covr" in audio:
+                    cover_data = audio["covr"][0]
+                    if isinstance(cover_data, bytes):
+                        metadata["album_art"] = cover_data
+                    elif len(cover_data) > 0:
+                        metadata["album_art"] = cover_data
+            
+            metadata["duration"] = audio.info.length
+            
+        except Exception as e:
+            print(e)
+        
+        return metadata
+    
+    def update_ui_with_metadata(self, metadata):
+        """Упрощенный метод обновления UI"""
+        try:
+            if self.track_title:
+                self.track_title.value = metadata["title"]
+            
+            if self.track_artist:
+                self.track_artist.value = metadata["artist"]
+            
+            if self.track_album:
+                self.track_album.value = metadata["album"]
+            
+            # Обновляем обложку - просто путь к файлу, никакого base64
+            if self.album_image and metadata.get("cover_path"):
+                self.album_image.content.src = metadata["cover_path"]
+            elif self.album_image:
+                self.album_image.content.src = "src/assets/images/logo_by_default.png"
+            
+            self._page.update()
+            
+        except Exception as e:
+            print(f"Error updating UI with metadata: {e}")
 
     def on_duration_change(self, e):
         self.total_duration = e.duration.in_milliseconds
@@ -54,7 +194,7 @@ class AudioControl:
 
         self.total_time_label.value = f"{minutes}:{seconds:02d}"
 
-        self.page.update()
+        self._page.update()
 
     def on_position_change(self, e):
         if self.total_duration > 0:
@@ -70,7 +210,7 @@ class AudioControl:
 
             if self.current_time_label:
                 self.current_time_label.value = f"{minutes}:{seconds:02d}"
-                self.page.update()
+                self._page.update()
 
     def on_state_change(self, e):
         self.is_playing = (e.state == fta.AudioState.PLAYING)
@@ -80,34 +220,34 @@ class AudioControl:
         self.track_loaded = True
 
     async def load_track(self, track_path):
-        try:
-            self.current_track_path = track_path
-            if self.audio:
+        self.current_track_path = track_path
+        metadata = self.extract_metadata(track_path)
+        self.update_ui_with_metadata(metadata)
+
+        if self.audio:
+            try:
                 await self.audio.release()
+            except:
+                pass
 
-            self.audio = fta.Audio(
-                src=str(track_path.resolve()),
-                autoplay=True,
-                volume=1,
-                balance=0,
-                release_mode=fta.ReleaseMode.STOP,
-                on_loaded=self.on_loaded,
-                on_duration_change=self.on_duration_change,
-                on_position_change=self.on_position_change,
-                on_state_change=self.on_state_change,
-                on_seek_complete=lambda _: print("Seek complete"),
-            )
+        self.audio = fta.Audio(
+            src=str(track_path.resolve()),
+            autoplay=True,
+            volume=1,
+            balance=0,
+            release_mode=fta.ReleaseMode.STOP,
+            on_loaded=self.on_loaded,
+            on_duration_change=self.on_duration_change,
+            on_position_change=self.on_position_change,
+            on_state_change=self.on_state_change
+        )
 
-            self.page.services.clear()
-            self.page.services.append(self.audio)
-            
-            if self.track_title:
-                self.track_title.value = track_path.stem
+        self._page.services.clear()
+        self._page.services.append(self.audio)
 
-            self.page.update()
+        self._page.update()
 
-        except Exception as e: 
-            print("LOAD ERROR:", e)
+
 
     async def play_track(self):
         if self.audio:
@@ -142,24 +282,10 @@ class AudioControl:
         self.current_track_index = (self.current_track_index - 1) % len(self.music_list)
         await self.load_track(self.music_list[self.current_track_index])
 
-    # async def resume(self):
-    #     await self.audio.resume()
-
-    # async def release(self):
-    #     await self.audio.release()
-
-    # async def seek_2s(self):
-    #     await self.audio.seek(2000)
-
     async def on_slider_change(self, e):
         if self.audio and self.total_duration > 0:
-            try:
-                # Используем self.time_slider (не time_music_slider)
-                new_position = int((self.time_slider.value / 100) * self.total_duration)
-                await self.audio.seek(new_position)
-                print(f"Seek to: {new_position} ms")
-            except Exception as e:
-                print("SEEK ERROR:", e)
+            new_position = int((self.time_slider.value / 100) * self.total_duration)
+            await self.audio.seek(new_position)
 
     async def handle_play_pause(self, e):
         if self.is_loading: 

@@ -1,31 +1,15 @@
 [project]
 name = "EMP"
 version = "0.1.0"
-description = ""
-readme = "README.md"
 requires-python = ">=3.10"
-authors = [
-    { name = "Dimekadze", email = "dimab8371@gmail.com" }
-]
 dependencies = [
     "flet>=0.85.1",
     "flet_audio>=0.85.1",
-    "certifi"
-]
-
-[dependency-groups]
-dev = [
-    "flet-cli>=0.85.1",
-    "flet-desktop>=0.85.1",
-    "flet-web>=0.85.1",
+    "mutagen>=1.47.0"
 ]
 
 [tool.flet]
 desktop_flavor = "full"
-org = "com.emp"
-product = "EMP"
-company = "Dimekadze"
-copyright = "com.emp"
 
 [tool.flet.app]
 path = "src"
