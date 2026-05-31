@@ -126,9 +126,12 @@ class PlayerScreen:
             border=ft.Border.all(5, "#FFFFFF"),
             border_radius=15,
             padding=20,
-            content=ft.Image(
-                src="src/assets/images/logo_by_default.png",
-                height=250
+            width=250,
+            height=250,
+            content=ft.Icon(
+                ft.Icons.MUSIC_NOTE, 
+                size=150,
+                color="FFFFFF"
             )
         )
 

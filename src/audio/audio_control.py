@@ -148,7 +148,7 @@ class AudioControl:
         self.update_ui_with_metadata(metadata)
 
         if self.audio:
-                await self.audio.release()
+            await self.audio.release()
 
         self.audio = fta.Audio(
             src=str(track_path.resolve()),
